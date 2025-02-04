@@ -119,7 +119,7 @@ Future<int> updateEntry(Entry entry) async {
   return await db.update(
     'entries', //Table name
     entry.toMap(), // Updated entry data
-    where: 'id = ?' // Condition to find the entry by ID
+    where: 'id = ?', // Condition to find the entry by ID
     whereArgs: [entry.id], // Arguments for the condition
   );
 }
