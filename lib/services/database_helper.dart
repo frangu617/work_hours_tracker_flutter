@@ -134,5 +134,26 @@ Future<int> deleteEntry(int id) async {
   );
 }
 
+  // ==================== Utility Methods ====================
 
+// Calculate total hours worked foa user within a date range
+Future<double> calculateTotalHours(int userId, DateTime startDate, DateTime endDate) async {
+  final db = await database; // Get the database instance
+  final List<Map<String, dynamic>> maps = await db.query(
+    'entries',  //Table name
+    where: 'userId = ? AND clockIn >= ? AND clockIn <= ?', // Condition to find entries within the date range
+    whereArgs:[userId, startDate.toIso8601String(), endDate.toIso8601String()], // Arguments for the condition
+  );
+
+  double totalHours = 0;
+  for (var map in maps){
+    final entry = Entry.fromMap(map);
+    if(entry.clockOut != null){
+      final clockIn = DateTime.parse(entry.clockIn);
+      final clockOut = DateTime.parse(entry.clockOut!);
+      totalHours += clockOut.difference(clockIn).inHours.toDouble();
+    }
+  }
+  return totalHours;
+}
 }
