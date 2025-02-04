@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../models/entry.dart';
 import '../services/database_helper.dart';
+import './admin_screen.dart';
 
 class HomeScreen extends StatefulWidget{
   @override 
@@ -71,6 +72,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Work Hours Tracker'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.person_add),
+            onPressed: () async {
+              //navigate to the adminscreen and wait for it to return
+              await Navigator.push(
+                context, MaterialPageRoute(builder: (context) => AdminScreen()), //navigate to admin screen
+              );
+              _loadUsers();
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
