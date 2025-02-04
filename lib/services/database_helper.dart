@@ -90,4 +90,49 @@ Future<int> deleteUser(int id) async {
     whereArgs: [id], //Arguments for the condition
   );
 }
+
+  // ==================== CRUD Methods for Entries ====================
+
+// Add a new entry to the database
+Future<int> addEntry(Entry entry) async{
+  final db = await database; // Get the database instance
+  return await db.insert('entries', entry.toMap()); // Insert the entry into the 'entries' table
+}
+
+// Get all entries for a specific user
+Future<List<Entry>> getEntries(int userId) async {
+  final db = await database; //Get the database instance
+  final List<Map<String, dynamic>> maps = await db.query(
+    'entries', //Table name
+    where: 'userId = ?', //condition to find entries by user ID
+    whereArgs: [userId], // Arguments for the condition
+  );
+  //convert the list of maps to a list of Entry objects
+  return List.generate(maps.length, (i) {
+    return Entry.fromMap(maps[i]);
+  });
+}
+
+//Update an entry in the database (e.g. add clock-out time)
+Future<int> updateEntry(Entry entry) async {
+  final db = await database; // Get the database instance
+  return await db.update(
+    'entries', //Table name
+    entry.toMap(), // Updated entry data
+    where: 'id = ?' // Condition to find the entry by ID
+    whereArgs: [entry.id], // Arguments for the condition
+  );
+}
+
+//Delete an entry from the database
+Future<int> deleteEntry(int id) async {
+  final db = await database; // Get Database instance
+  return await db.delete(
+    'entries', //Table name
+    where: 'id = ?', // Condition to find the entry by ID
+    whereArgs: [id],
+  );
+}
+
+
 }
