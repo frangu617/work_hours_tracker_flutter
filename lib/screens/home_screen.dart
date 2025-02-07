@@ -4,25 +4,28 @@ import '../models/entry.dart';
 import '../services/database_helper.dart';
 import './admin_screen.dart';
 
-class HomeScreen extends StatefulWidget{
-  @override 
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper(); // Database helper instance
-  List<User> _users = []; // List of user
-  User? _selectedUser; //Currently selected user
+  List<User> _users = []; // List of users
+  User? _selectedUser; // Currently selected user
   List<Entry> _entries = []; // List of clock-in/out entries for the selected user
   bool _isClockedIn = false; // Tracks if the user is currently clocked in
 
-  @override void initState(){
+  @override
+  void initState() {
     super.initState();
     _loadUsers(); // Load users when the screen is first created
   }
 
   // Load all users from the database
-  Future<void> _loadUsers()async {
+  Future<void> _loadUsers() async {
     final users = await _dbHelper.getUsers();
     setState(() {
       _users = users;
@@ -39,9 +42,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  //Handle clock-in action
+  // Handle clock-in action
   Future<void> _clockIn() async {
-    if(_selectedUser != null) {
+    if (_selectedUser != null) {
       final entry = Entry(
         userId: _selectedUser!.id!,
         clockIn: DateTime.now().toIso8601String(),
@@ -54,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-   // Handle clock-out action
+  // Handle clock-out action
   Future<void> _clockOut() async {
     if (_selectedUser != null && _entries.isNotEmpty) {
       final lastEntry = _entries.last;
@@ -68,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Work Hours Tracker'),
@@ -76,9 +79,9 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.person_add),
             onPressed: () async {
-              //navigate to the adminscreen and wait for it to return
+              // Navigate to the admin screen and wait for it to return
               await Navigator.push(
-                context, MaterialPageRoute(builder: (context) => AdminScreen()), //navigate to admin screen
+                context, MaterialPageRoute(builder: (context) => AdminScreen()), // Navigate to admin screen
               );
               _loadUsers();
             },
@@ -90,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            //Dropdown to select a user
+            // Dropdown to select a user
             DropdownButton<User>(
               value: _selectedUser,
               hint: Text('Select a user'),
@@ -108,9 +111,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 _loadEntries(); // Load entries for the selected user
               },
             ),
-            SizedBox(height:20),
+            SizedBox(height: 20),
 
-            //Clock-in/out buttons
+            // Clock-in/out buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -119,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Text('Clock In'),
                 ),
                 ElevatedButton(
-                  onPressed: _selectedUser == null || _isClockedIn ? null : _clockOut,
+                  onPressed: _selectedUser == null || !_isClockedIn ? null : _clockOut,
                   child: Text('Clock Out'),
                 ),
               ],
