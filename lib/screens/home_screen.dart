@@ -3,6 +3,7 @@ import '../models/user.dart';
 import '../models/entry.dart';
 import '../services/database_helper.dart';
 import './admin_screen.dart';
+import 'package:intl/intl.dart'; // Import the intl package
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -68,6 +69,13 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       _loadEntries(); // Refresh the entries list
     }
+  }
+
+  // Helper function to format date and time
+  String formatDateTime(String isoDate) {
+    final DateTime dateTime = DateTime.parse(isoDate);
+    final DateFormat formatter = DateFormat('EEEE, h:mm a, MM/dd/yyyy'); // Desired format
+    return formatter.format(dateTime);
   }
 
   @override
@@ -136,9 +144,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (context, index) {
                   final entry = _entries[index];
                   return ListTile(
-                    title: Text('Clock In: ${entry.clockIn}'),
+                    title: Text('Clock In: ${formatDateTime(entry.clockIn)}'),
                     subtitle: entry.clockOut != null
-                        ? Text('Clock Out: ${entry.clockOut}')
+                        ? Text('Clock Out: ${formatDateTime(entry.clockOut!)}')
                         : Text('Still clocked in'),
                   );
                 },
