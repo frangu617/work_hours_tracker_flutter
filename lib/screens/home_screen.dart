@@ -16,9 +16,16 @@ class _HomeScreenState extends State<HomeScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper(); // Database helper instance
   List<User> _users = []; // List of users
   User? _selectedUser; // Currently selected user
-  List<Entry> _entries =
-      []; // List of clock-in/out entries for the selected user
+  List<Entry> _entries = []; // List of clock-in/out entries for the selected user
   bool _isClockedIn = false; // Tracks if the user is currently clocked in
+  bool _isDarkMode = false; // Tracks dark mode
+
+  // Define a color scheme
+  final Color primaryColor = Color(0xFF6200EE); // Purple
+  final Color secondaryColor = Color(0xFF03DAC6); // Teal
+  final Color backgroundColor = Color(0xFFF5F5F5); // Light gray
+  final Color textColor = Color(0xFF000000); // Black
+  final Color buttonColor = Color(0xFF6200EE); // Purple
 
   @override
   void initState() {
@@ -29,18 +36,22 @@ class _HomeScreenState extends State<HomeScreen> {
   // Load all users from the database
   Future<void> _loadUsers() async {
     final users = await _dbHelper.getUsers();
-    setState(() {
-      _users = users;
-    });
+    if (mounted) {
+      setState(() {
+        _users = users.toSet().toList(); // Remove duplicates
+      });
+    }
   }
 
   // Load entries for the selected user
   Future<void> _loadEntries() async {
     if (_selectedUser != null) {
       final entries = await _dbHelper.getEntries(_selectedUser!.id!);
-      setState(() {
-        _entries = entries;
-      });
+      if (mounted) {
+        setState(() {
+          _entries = entries;
+        });
+      }
     }
   }
 
@@ -52,9 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
         clockIn: DateTime.now().toIso8601String(),
       );
       await _dbHelper.addEntry(entry);
-      setState(() {
-        _isClockedIn = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isClockedIn = true;
+        });
+      }
       _loadEntries(); // Refresh the entries list
     }
   }
@@ -65,100 +78,13 @@ class _HomeScreenState extends State<HomeScreen> {
       final lastEntry = _entries.last;
       lastEntry.clockOut = DateTime.now().toIso8601String();
       await _dbHelper.updateEntry(lastEntry);
-      setState(() {
-        _isClockedIn = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isClockedIn = false;
+        });
+      }
       _loadEntries(); // Refresh the entries list
     }
-  }
-
-  // Helper function to calculate total hours worked
-  double _calculateTotalHours() {
-    double totalHours = 0.0;
-    for (var entry in _entries) {
-      if (entry.clockOut != null) {
-        final clockIn = DateTime.parse(entry.clockIn);
-        final clockOut = DateTime.parse(entry.clockOut!);
-        totalHours += clockOut.difference(clockIn).inHours.toDouble();
-      }
-    }
-    return totalHours;
-  }
-
-  // Helper function to calculate total hours worked for a specific user
-  double _calculateTotalHoursForUser(User user) {
-    double totalHours = 0.0;
-    for (var entry in _entries) {
-      if (entry.userId == user.id && entry.clockOut != null) {
-        final clockIn = DateTime.parse(entry.clockIn);
-        final clockOut = DateTime.parse(entry.clockOut!);
-        totalHours += clockOut.difference(clockIn).inHours.toDouble();
-      }
-    }
-    return totalHours;
-  }
-
-  // Helper function to calculate total hours worked for a specific date
-  double _calculateTotalHoursForDate(DateTime date) {
-    double totalHours = 0.0;
-    for (var entry in _entries) {
-      if (entry.clockOut != null) {
-        final clockIn = DateTime.parse(entry.clockIn);
-        final clockOut = DateTime.parse(entry.clockOut!);
-        if (clockIn.day == date.day &&
-            clockIn.month == date.month &&
-            clockIn.year == date.year) {
-          totalHours += clockOut.difference(clockIn).inHours.toDouble();
-        }
-      }
-    }
-    return totalHours;
-  }
-
-  // Helper function to calculate total hours worked for a specific month
-  double _calculateTotalHoursForMonth(DateTime date) {
-    double totalHours = 0.0;
-    for (var entry in _entries) {
-      if (entry.clockOut != null) {
-        final clockIn = DateTime.parse(entry.clockIn);
-        final clockOut = DateTime.parse(entry.clockOut!);
-        if (clockIn.month == date.month && clockIn.year == date.year) {
-          totalHours += clockOut.difference(clockIn).inHours.toDouble();
-        }
-      }
-    }
-    return totalHours;
-  }
-
-  // Helper function to calculate total hours worked for a specific year
-  double _calculateTotalHoursForYear(DateTime date) {
-    double totalHours = 0.0;
-    for (var entry in _entries) {
-      if (entry.clockOut != null) {
-        final clockIn = DateTime.parse(entry.clockIn);
-        final clockOut = DateTime.parse(entry.clockOut!);
-        if (clockIn.year == date.year) {
-          totalHours += clockOut.difference(clockIn).inHours.toDouble();
-        }
-      }
-    }
-    return totalHours;
-  }
-
-  // Helper function to calculate total hours worked for a specific date range
-  double _calculateTotalHoursForDateRange(
-      DateTime startDate, DateTime endDate) {
-    double totalHours = 0.0;
-    for (var entry in _entries) {
-      if (entry.clockOut != null) {
-        final clockIn = DateTime.parse(entry.clockIn);
-        final clockOut = DateTime.parse(entry.clockOut!);
-        if (clockIn.isAfter(startDate) && clockIn.isBefore(endDate)) {
-          totalHours += clockOut.difference(clockIn).inHours.toDouble();
-        }
-      }
-    }
-    return totalHours;
   }
 
   // Add custom hours (clock-in and clock-out times)
@@ -219,136 +145,208 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     // Add the custom entry to the database
-    await _dbHelper.addCustomEntry(
-        _selectedUser!.id!, customClockIn, customClockOut);
+    await _dbHelper.addCustomEntry(_selectedUser!.id!, customClockIn, customClockOut);
     _loadEntries(); // Refresh the entries list
   }
 
   // Helper function to format date and time
   String formatDateTime(String isoDate) {
     final DateTime dateTime = DateTime.parse(isoDate);
-    final DateFormat formatter =
-        DateFormat('EEEE, h:mm a, MM/dd/yyyy'); // Desired format
+    final DateFormat formatter = DateFormat('EEEE, h:mm a, MM/dd/yyyy'); // Desired format
     return formatter.format(dateTime);
+  }
+
+  // Toggle dark mode
+  void _toggleTheme() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Work Hours Tracker'),
-        actions: [
-          // Button to navigate to the AdminScreen
-          IconButton(
-            icon: Icon(Icons.person_add),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AdminScreen()),
-              );
-              _loadUsers(); // Refresh the users list after returning
-            },
+    return MaterialApp(
+      title: 'Work Hours Tracker',
+      theme: _isDarkMode ? darkTheme : lightTheme,
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Work Hours Tracker',
+            style: TextStyle(color: Colors.white),
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Dropdown to select a user
-            DropdownButton<User>(
-              value: _selectedUser,
-              hint: Text('Select a user'),
-              items: _users.map((user) {
-                return DropdownMenuItem<User>(
-                  value: user,
-                  child: Row(
-                    children: [
-                      Text(user.name), // Display user name
-                      Spacer(), // Add space between name and delete button
-                      IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          // Delete the selected user
-                          await _dbHelper.deleteUser(user.id!);
-                          _loadUsers(); // Refresh the users list
-                        },
-                      ),
-                    ],
-                  ),
+          backgroundColor: _isDarkMode ? Colors.grey[900] : primaryColor,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.person_add, color: Colors.white),
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AdminScreen()),
                 );
-              }).toList(),
-              onChanged: (user) {
-                setState(() {
-                  _selectedUser = user;
-                  _isClockedIn =
-                      false; // Reset clock-in status when user changes
-                });
-                _loadEntries(); // Load entries for the selected user
+                _loadUsers();
               },
             ),
-            SizedBox(height: 20),
-
-            // Clock-in/out and custom hours buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Clock In button
-                ElevatedButton(
-                  onPressed:
-                      _selectedUser == null || _isClockedIn ? null : _clockIn,
-                  child: Text('Clock In'),
-                ),
-                // Clock Out button
-                ElevatedButton(
-                  onPressed:
-                      _selectedUser == null || !_isClockedIn ? null : _clockOut,
-                  child: Text('Clock Out'),
-                ),
-                // Add Custom Hours button
-                ElevatedButton(
-                  onPressed: _selectedUser == null ? null : _addCustomHours,
-                  child: Text('Add Custom Hours'),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-
-            // Display total hours worked
-            Text(
-              'Total Hours Worked: ${_calculateTotalHours().toStringAsFixed(2)}',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20),
-
-            // List of clock-in/out entries
-            Expanded(
-              child: ListView.builder(
-                itemCount: _entries.length,
-                itemBuilder: (context, index) {
-                  final entry = _entries[index];
-                  return ListTile(
-                    title: Text('Clock In: ${formatDateTime(entry.clockIn)}'),
-                    subtitle: entry.clockOut != null
-                        ? Text('Clock Out: ${formatDateTime(entry.clockOut!)}')
-                        : Text('Still clocked in'),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        // Delete the selected entry
-                        await _dbHelper.deleteEntry(entry.id!);
-                        _loadEntries(); // Refresh the entries list
-                      },
-                    ),
-                  );
-                },
-              ),
+            IconButton(
+              icon: Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode, color: Colors.white),
+              onPressed: _toggleTheme,
             ),
           ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Dropdown to select a user
+              DropdownButton<User>(
+                value: _selectedUser,
+                hint: Text('Select a user', style: TextStyle(color: textColor)),
+                items: _users.map((user) {
+                  return DropdownMenuItem<User>(
+                    value: user,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Text(user.name, style: TextStyle(color: textColor)),
+                          Spacer(),
+                          IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              await _dbHelper.deleteUser(user.id!);
+                              _loadUsers(); // Refresh the users list
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (user) {
+                  setState(() {
+                    _selectedUser = user;
+                    _isClockedIn = false; // Reset clock-in status when user changes
+                  });
+                  _loadEntries(); // Load entries for the selected user
+                },
+                dropdownColor: _isDarkMode ? Colors.grey[800] : backgroundColor,
+                style: TextStyle(color: textColor),
+                icon: Icon(Icons.arrow_drop_down, color: primaryColor),
+                underline: Container(
+                  height: 2,
+                  color: primaryColor,
+                ),
+              ),
+              SizedBox(height: 20),
+
+              // Clock-in/out and custom hours buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Clock In button
+                  ElevatedButton(
+                    onPressed: _selectedUser == null || _isClockedIn ? null : _clockIn,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: buttonColor,
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text('Clock In', style: TextStyle(color: Colors.white)),
+                  ),
+                  // Clock Out button
+                  ElevatedButton(
+                    onPressed: _selectedUser == null || !_isClockedIn ? null : _clockOut,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: buttonColor,
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text('Clock Out', style: TextStyle(color: Colors.white)),
+                  ),
+                  // Add Custom Hours button
+                  ElevatedButton(
+                    onPressed: _selectedUser == null ? null : _addCustomHours,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: buttonColor,
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text('Add Custom Hours', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+
+              // List of clock-in/out entries
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _entries.length,
+                  itemBuilder: (context, index) {
+                    final entry = _entries[index];
+                    return Card(
+                      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ListTile(
+                        title: Text('Clock In: ${formatDateTime(entry.clockIn)}', style: TextStyle(color: textColor)),
+                        subtitle: entry.clockOut != null
+                            ? Text('Clock Out: ${formatDateTime(entry.clockOut!)}', style: TextStyle(color: textColor))
+                            : Text('Still clocked in', style: TextStyle(color: textColor)),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            await _dbHelper.deleteEntry(entry.id!);
+                            _loadEntries(); // Refresh the entries list
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+// Define light and dark themes
+final ThemeData lightTheme = ThemeData(
+  brightness: Brightness.light,
+  primaryColor: Color(0xFF6200EE),
+  colorScheme: ColorScheme.light(
+    primary: Color(0xFF6200EE),
+    secondary: Color(0xFF03DAC6),
+    background: Color(0xFFF5F5F5),
+  ),
+  scaffoldBackgroundColor: Color(0xFFF5F5F5),
+  appBarTheme: AppBarTheme(
+    backgroundColor: Color(0xFF6200EE),
+    foregroundColor: Colors.white,
+  ),
+);
+
+final ThemeData darkTheme = ThemeData(
+  brightness: Brightness.dark,
+  primaryColor: Color(0xFF6200EE),
+  colorScheme: ColorScheme.dark(
+    primary: Color(0xFF6200EE),
+    secondary: Color(0xFF03DAC6),
+    background: Colors.grey[900]!,
+  ),
+  scaffoldBackgroundColor: Colors.grey[900],
+  appBarTheme: AppBarTheme(
+    backgroundColor: Colors.grey[900],
+    foregroundColor: Colors.white,
+  ),
+);

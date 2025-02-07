@@ -1,3 +1,4 @@
+// lib/models/entry.dart
 class Entry {
   int? id;
   int userId;
@@ -11,6 +12,7 @@ class Entry {
     this.clockOut,
   });
 
+  // Constructor for custom hours
   Entry.custom({
     this.id,
     required this.userId,
@@ -24,7 +26,7 @@ class Entry {
       'id': id,
       'userId': userId,
       'clockIn': clockIn,
-      'clockOut': clockOut
+      'clockOut': clockOut,
     };
   }
 
