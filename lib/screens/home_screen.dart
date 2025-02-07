@@ -3,7 +3,7 @@ import '../models/user.dart';
 import '../models/entry.dart';
 import '../services/database_helper.dart';
 import './admin_screen.dart';
-import 'package:intl/intl.dart'; // Import the intl package
+import 'package:intl/intl.dart'; // For date formatting
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -161,59 +161,64 @@ class _HomeScreenState extends State<HomeScreen> {
     return totalHours;
   }
 
-  // Add customr hours worked
+  // Add custom hours (clock-in and clock-out times)
   Future<void> _addCustomHours() async {
-    if (_selectedUser == null) return;
+    if (_selectedUser == null) return; // Ensure a user is selected
 
-    DateTime? clockIn = await showDatePicker(
+    // Step 1: Select clock-in date
+    DateTime? clockInDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
 
-    if (clockIn == null) return;
+    if (clockInDate == null) return; // User canceled date picker
 
+    // Step 2: Select clock-in time
     TimeOfDay? clockInTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
 
-    if (clockInTime == null) return;
+    if (clockInTime == null) return; // User canceled time picker
 
-    DateTime? clockOut = await showDatePicker(
+    // Step 3: Select clock-out date
+    DateTime? clockOutDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
 
-    if (clockOut == null) return;
+    if (clockOutDate == null) return; // User canceled date picker
 
+    // Step 4: Select clock-out time
     TimeOfDay? clockOutTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
 
-    if (clockOutTime == null) return;
+    if (clockOutTime == null) return; // User canceled time picker
 
-    // Combine date and time
+    // Combine date and time for clock-in and clock-out
     final customClockIn = DateTime(
-      clockIn.year,
-      clockIn.month,
-      clockIn.day,
+      clockInDate.year,
+      clockInDate.month,
+      clockInDate.day,
       clockInTime.hour,
       clockInTime.minute,
     );
 
     final customClockOut = DateTime(
-      clockOut.year,
-      clockOut.month,
-      clockOut.day,
+      clockOutDate.year,
+      clockOutDate.month,
+      clockOutDate.day,
       clockOutTime.hour,
       clockOutTime.minute,
     );
 
+    // Add the custom entry to the database
     await _dbHelper.addCustomEntry(
         _selectedUser!.id!, customClockIn, customClockOut);
     _loadEntries(); // Refresh the entries list
@@ -233,6 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('Work Hours Tracker'),
         actions: [
+          // Button to navigate to the AdminScreen
           IconButton(
             icon: Icon(Icons.person_add),
             onPressed: () async {
@@ -240,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 context,
                 MaterialPageRoute(builder: (context) => AdminScreen()),
               );
-              _loadUsers();
+              _loadUsers(); // Refresh the users list after returning
             },
           ),
         ],
@@ -250,37 +256,57 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Dropdown to select a user
             DropdownButton<User>(
               value: _selectedUser,
               hint: Text('Select a user'),
               items: _users.map((user) {
                 return DropdownMenuItem<User>(
                   value: user,
-                  child: Text(user.name),
+                  child: Row(
+                    children: [
+                      Text(user.name), // Display user name
+                      Spacer(), // Add space between name and delete button
+                      IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          // Delete the selected user
+                          await _dbHelper.deleteUser(user.id!);
+                          _loadUsers(); // Refresh the users list
+                        },
+                      ),
+                    ],
+                  ),
                 );
               }).toList(),
               onChanged: (user) {
                 setState(() {
                   _selectedUser = user;
-                  _isClockedIn = false;
+                  _isClockedIn =
+                      false; // Reset clock-in status when user changes
                 });
-                _loadEntries();
+                _loadEntries(); // Load entries for the selected user
               },
             ),
             SizedBox(height: 20),
+
+            // Clock-in/out and custom hours buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                // Clock In button
                 ElevatedButton(
                   onPressed:
                       _selectedUser == null || _isClockedIn ? null : _clockIn,
                   child: Text('Clock In'),
                 ),
+                // Clock Out button
                 ElevatedButton(
                   onPressed:
                       _selectedUser == null || !_isClockedIn ? null : _clockOut,
                   child: Text('Clock Out'),
                 ),
+                // Add Custom Hours button
                 ElevatedButton(
                   onPressed: _selectedUser == null ? null : _addCustomHours,
                   child: Text('Add Custom Hours'),
@@ -288,6 +314,16 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             SizedBox(height: 20),
+
+            // Display total hours worked
+            Text(
+              'Total Hours Worked: ${_calculateTotalHours().toStringAsFixed(2)}',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 20),
+
+            // List of clock-in/out entries
             Expanded(
               child: ListView.builder(
                 itemCount: _entries.length,
@@ -299,8 +335,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? Text('Clock Out: ${formatDateTime(entry.clockOut!)}')
                         : Text('Still clocked in'),
                     trailing: IconButton(
-                      icon: Icon(Icons.delete),
+                      icon: Icon(Icons.delete, color: Colors.red),
                       onPressed: () async {
+                        // Delete the selected entry
                         await _dbHelper.deleteEntry(entry.id!);
                         _loadEntries(); // Refresh the entries list
                       },
