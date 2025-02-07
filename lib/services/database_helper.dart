@@ -1,63 +1,77 @@
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+
 import '../models/user.dart';
 import '../models/entry.dart';
 
 class DatabaseHelper {
-  // Singleton pattern to ensure only one instance of DatabaseHelper exists
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
   static Database? _database;
 
   DatabaseHelper._internal();
 
-  // Initialize the database factory for FFI
+  // Initialize the correct database based on the platform
   static void initialize() {
-    // Initialize FFI
-    sqfliteFfiInit();
-    // Set the database factory to FFI
-    databaseFactory = databaseFactoryFfi;
+    if (kIsWeb) {
+      print('Initializing database for web...');
+      databaseFactory = databaseFactoryFfiWeb; // Use Web database
+    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      print('Initializing database for desktop...');
+      sqfliteFfiInit(); // Initialize FFI
+      databaseFactory = databaseFactoryFfi; // Use FFI for desktop
+    } else {
+      print('Initializing database for mobile...');
+      // Use default sqflite for mobile
+    }
   }
 
   // Getter for the database instance
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDatabase(); // Initialize the database if it doesn't exist
+    _database = await _initDatabase();
     return _database!;
   }
 
   // Initialize the database
   Future<Database> _initDatabase() async {
-    // Get the path to the database file
-    String path = join(await getDatabasesPath(), 'work_hours.db');
+    String path;
+    if (kIsWeb) {
+      path = 'work_hours.db'; // Web uses an in-memory database
+    } else {
+      path = join(await getDatabasesPath(), 'work_hours.db');
+    }
+
     return await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
         version: 1,
-        onCreate: _onCreate, // Create Database tables when the database is first created
+        onCreate: _onCreate,
       ),
     );
   }
 
-  // Create tables in the database
+  // Create tables
   Future<void> _onCreate(Database db, int version) async {
-    // Create the 'users' table
     await db.execute('''
-    CREATE TABLE users(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT
-    )
+      CREATE TABLE users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT
+      )
     ''');
 
-    // Create the 'entries' table with a foreign key to 'users'
     await db.execute('''
-    CREATE TABLE entries(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    userId INTEGER,
-    clockIn TEXT,
-    clockOut TEXT,
-    FOREIGN KEY(userId) REFERENCES users(id)
-    )
+      CREATE TABLE entries(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER,
+        clockIn TEXT,
+        clockOut TEXT,
+        FOREIGN KEY(userId) REFERENCES users(id)
+      )
     ''');
   }
 

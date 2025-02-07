@@ -11,6 +11,14 @@ class Entry {
     this.clockOut,
   });
 
+  Entry.custom({
+    this.id,
+    required this.userId,
+    required DateTime clockIn,
+    required DateTime clockOut,
+  }) : clockIn = clockIn.toIso8601String(),
+       clockOut = clockOut.toIso8601String();
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
