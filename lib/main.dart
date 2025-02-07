@@ -9,6 +9,8 @@ void main() {
 }
 
 class WorkHoursTrackerApp extends StatelessWidget {
+  const WorkHoursTrackerApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

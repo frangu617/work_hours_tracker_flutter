@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
@@ -156,6 +155,15 @@ class DatabaseHelper {
       where: 'id = ?', // Condition to find the entry by ID
       whereArgs: [id], // Arguments for the condition
     );
+  }
+
+  Future<int> addCustomEntry(int userId, DateTime clockIn, DateTime clockOut) async {
+    final entry = Entry.custom(
+      userId: userId, 
+      clockIn: clockIn, 
+      clockOut: clockOut
+      );
+      return await addEntry(entry);
   }
 
   // ==================== Utility Methods ====================

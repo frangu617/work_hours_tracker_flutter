@@ -16,7 +16,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper(); // Database helper instance
   List<User> _users = []; // List of users
   User? _selectedUser; // Currently selected user
-  List<Entry> _entries = []; // List of clock-in/out entries for the selected user
+  List<Entry> _entries =
+      []; // List of clock-in/out entries for the selected user
   bool _isClockedIn = false; // Tracks if the user is currently clocked in
 
   @override
@@ -71,10 +72,158 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Helper function to calculate total hours worked
+  double _calculateTotalHours() {
+    double totalHours = 0.0;
+    for (var entry in _entries) {
+      if (entry.clockOut != null) {
+        final clockIn = DateTime.parse(entry.clockIn);
+        final clockOut = DateTime.parse(entry.clockOut!);
+        totalHours += clockOut.difference(clockIn).inHours.toDouble();
+      }
+    }
+    return totalHours;
+  }
+
+  // Helper function to calculate total hours worked for a specific user
+  double _calculateTotalHoursForUser(User user) {
+    double totalHours = 0.0;
+    for (var entry in _entries) {
+      if (entry.userId == user.id && entry.clockOut != null) {
+        final clockIn = DateTime.parse(entry.clockIn);
+        final clockOut = DateTime.parse(entry.clockOut!);
+        totalHours += clockOut.difference(clockIn).inHours.toDouble();
+      }
+    }
+    return totalHours;
+  }
+
+  // Helper function to calculate total hours worked for a specific date
+  double _calculateTotalHoursForDate(DateTime date) {
+    double totalHours = 0.0;
+    for (var entry in _entries) {
+      if (entry.clockOut != null) {
+        final clockIn = DateTime.parse(entry.clockIn);
+        final clockOut = DateTime.parse(entry.clockOut!);
+        if (clockIn.day == date.day &&
+            clockIn.month == date.month &&
+            clockIn.year == date.year) {
+          totalHours += clockOut.difference(clockIn).inHours.toDouble();
+        }
+      }
+    }
+    return totalHours;
+  }
+
+  // Helper function to calculate total hours worked for a specific month
+  double _calculateTotalHoursForMonth(DateTime date) {
+    double totalHours = 0.0;
+    for (var entry in _entries) {
+      if (entry.clockOut != null) {
+        final clockIn = DateTime.parse(entry.clockIn);
+        final clockOut = DateTime.parse(entry.clockOut!);
+        if (clockIn.month == date.month && clockIn.year == date.year) {
+          totalHours += clockOut.difference(clockIn).inHours.toDouble();
+        }
+      }
+    }
+    return totalHours;
+  }
+
+  // Helper function to calculate total hours worked for a specific year
+  double _calculateTotalHoursForYear(DateTime date) {
+    double totalHours = 0.0;
+    for (var entry in _entries) {
+      if (entry.clockOut != null) {
+        final clockIn = DateTime.parse(entry.clockIn);
+        final clockOut = DateTime.parse(entry.clockOut!);
+        if (clockIn.year == date.year) {
+          totalHours += clockOut.difference(clockIn).inHours.toDouble();
+        }
+      }
+    }
+    return totalHours;
+  }
+
+  // Helper function to calculate total hours worked for a specific date range
+  double _calculateTotalHoursForDateRange(
+      DateTime startDate, DateTime endDate) {
+    double totalHours = 0.0;
+    for (var entry in _entries) {
+      if (entry.clockOut != null) {
+        final clockIn = DateTime.parse(entry.clockIn);
+        final clockOut = DateTime.parse(entry.clockOut!);
+        if (clockIn.isAfter(startDate) && clockIn.isBefore(endDate)) {
+          totalHours += clockOut.difference(clockIn).inHours.toDouble();
+        }
+      }
+    }
+    return totalHours;
+  }
+
+  // Add customr hours worked
+  Future<void> _addCustomHours() async {
+    if (_selectedUser == null) return;
+
+    DateTime? clockIn = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (clockIn == null) return;
+
+    TimeOfDay? clockInTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (clockInTime == null) return;
+
+    DateTime? clockOut = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (clockOut == null) return;
+
+    TimeOfDay? clockOutTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (clockOutTime == null) return;
+
+    // Combine date and time
+    final customClockIn = DateTime(
+      clockIn.year,
+      clockIn.month,
+      clockIn.day,
+      clockInTime.hour,
+      clockInTime.minute,
+    );
+
+    final customClockOut = DateTime(
+      clockOut.year,
+      clockOut.month,
+      clockOut.day,
+      clockOutTime.hour,
+      clockOutTime.minute,
+    );
+
+    await _dbHelper.addCustomEntry(
+        _selectedUser!.id!, customClockIn, customClockOut);
+    _loadEntries(); // Refresh the entries list
+  }
+
   // Helper function to format date and time
   String formatDateTime(String isoDate) {
     final DateTime dateTime = DateTime.parse(isoDate);
-    final DateFormat formatter = DateFormat('EEEE, h:mm a, MM/dd/yyyy'); // Desired format
+    final DateFormat formatter =
+        DateFormat('EEEE, h:mm a, MM/dd/yyyy'); // Desired format
     return formatter.format(dateTime);
   }
 
@@ -87,9 +236,9 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.person_add),
             onPressed: () async {
-              // Navigate to the admin screen and wait for it to return
               await Navigator.push(
-                context, MaterialPageRoute(builder: (context) => AdminScreen()), // Navigate to admin screen
+                context,
+                MaterialPageRoute(builder: (context) => AdminScreen()),
               );
               _loadUsers();
             },
@@ -101,7 +250,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Dropdown to select a user
             DropdownButton<User>(
               value: _selectedUser,
               hint: Text('Select a user'),
@@ -114,30 +262,32 @@ class _HomeScreenState extends State<HomeScreen> {
               onChanged: (user) {
                 setState(() {
                   _selectedUser = user;
-                  _isClockedIn = false; // Reset clock-in status when user changes
+                  _isClockedIn = false;
                 });
-                _loadEntries(); // Load entries for the selected user
+                _loadEntries();
               },
             ),
             SizedBox(height: 20),
-
-            // Clock-in/out buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: _selectedUser == null || _isClockedIn ? null : _clockIn,
+                  onPressed:
+                      _selectedUser == null || _isClockedIn ? null : _clockIn,
                   child: Text('Clock In'),
                 ),
                 ElevatedButton(
-                  onPressed: _selectedUser == null || !_isClockedIn ? null : _clockOut,
+                  onPressed:
+                      _selectedUser == null || !_isClockedIn ? null : _clockOut,
                   child: Text('Clock Out'),
+                ),
+                ElevatedButton(
+                  onPressed: _selectedUser == null ? null : _addCustomHours,
+                  child: Text('Add Custom Hours'),
                 ),
               ],
             ),
             SizedBox(height: 20),
-
-            // List of clock-in/out entries
             Expanded(
               child: ListView.builder(
                 itemCount: _entries.length,
@@ -148,6 +298,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     subtitle: entry.clockOut != null
                         ? Text('Clock Out: ${formatDateTime(entry.clockOut!)}')
                         : Text('Still clocked in'),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () async {
+                        await _dbHelper.deleteEntry(entry.id!);
+                        _loadEntries(); // Refresh the entries list
+                      },
+                    ),
                   );
                 },
               ),
