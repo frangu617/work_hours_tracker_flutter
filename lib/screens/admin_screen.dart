@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/database_helper.dart';
+import '../theme/app_theme.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
