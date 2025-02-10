@@ -4,6 +4,7 @@ import '../models/entry.dart';
 import '../services/database_helper.dart';
 import './admin_screen.dart';
 import 'package:intl/intl.dart'; // For date formatting
+import '../theme/app_theme.dart'; // Import the theme file
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,13 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Entry> _entries = []; // List of clock-in/out entries for the selected user
   bool _isClockedIn = false; // Tracks if the user is currently clocked in
   bool _isDarkMode = false; // Tracks dark mode
-
-  // Define a color scheme
-  final Color primaryColor = Color(0xFF6200EE); // Purple
-  final Color secondaryColor = Color(0xFF03DAC6); // Teal
-  final Color backgroundColor = Color(0xFFF5F5F5); // Light gray
-  final Color textColor = Color(0xFF000000); // Black
-  final Color buttonColor = Color(0xFF6200EE); // Purple
 
   @override
   void initState() {
@@ -167,14 +161,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Work Hours Tracker',
-      theme: _isDarkMode ? darkTheme : lightTheme,
+      theme: _isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
       home: Scaffold(
         appBar: AppBar(
           title: Text(
             'Work Hours Tracker',
             style: TextStyle(color: Colors.white),
           ),
-          backgroundColor: _isDarkMode ? Colors.grey[900] : primaryColor,
+          backgroundColor: _isDarkMode ? Colors.grey[900] : AppTheme.primaryColor,
           actions: [
             IconButton(
               icon: Icon(Icons.person_add, color: Colors.white),
@@ -200,41 +194,49 @@ class _HomeScreenState extends State<HomeScreen> {
               // Dropdown to select a user
               DropdownButton<User>(
                 value: _selectedUser,
-                hint: Text('Select a user', style: TextStyle(color: textColor)),
-                items: _users.map((user) {
-                  return DropdownMenuItem<User>(
-                    value: user,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          Text(user.name, style: TextStyle(color: textColor)),
-                          Spacer(),
-                          IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
-                              await _dbHelper.deleteUser(user.id!);
-                              _loadUsers(); // Refresh the users list
-                            },
+                hint: Text('Select a user', style: TextStyle(color: _isDarkMode ? Colors.white : AppTheme.textColor)),
+                items: _users.isNotEmpty
+                    ? _users.map((user) {
+                        return DropdownMenuItem<User>(
+                          value: user,
+                          child: SizedBox(
+                            width: double.infinity, // Ensure the dropdown item takes full width
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    user.name,
+                                    style: TextStyle(color: AppTheme.textColor),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () async {
+                                    await _dbHelper.deleteUser(user.id!);
+                                    _loadUsers(); // Refresh the users list
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
+                        );
+                      }).toList()
+                    : [], // If _users is empty, provide an empty list
                 onChanged: (user) {
-                  setState(() {
-                    _selectedUser = user;
-                    _isClockedIn = false; // Reset clock-in status when user changes
-                  });
-                  _loadEntries(); // Load entries for the selected user
+                  if (user != null) {
+                    setState(() {
+                      _selectedUser = user;
+                      _isClockedIn = false; // Reset clock-in status when user changes
+                    });
+                    _loadEntries(); // Load entries for the selected user
+                  }
                 },
-                dropdownColor: _isDarkMode ? Colors.grey[800] : backgroundColor,
-                style: TextStyle(color: textColor),
-                icon: Icon(Icons.arrow_drop_down, color: primaryColor),
+                dropdownColor: _isDarkMode ? Colors.grey[800] : AppTheme.backgroundColor,
+                style: TextStyle(color: _isDarkMode ? Colors.white : AppTheme.textColor),
+                icon: Icon(Icons.arrow_drop_down, color: AppTheme.primaryColor),
                 underline: Container(
                   height: 2,
-                  color: primaryColor,
+                  color: AppTheme.primaryColor,
                 ),
               ),
               SizedBox(height: 20),
@@ -247,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ElevatedButton(
                     onPressed: _selectedUser == null || _isClockedIn ? null : _clockIn,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonColor,
+                      backgroundColor: AppTheme.buttonColor,
                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -259,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ElevatedButton(
                     onPressed: _selectedUser == null || !_isClockedIn ? null : _clockOut,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonColor,
+                      backgroundColor: AppTheme.buttonColor,
                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -271,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ElevatedButton(
                     onPressed: _selectedUser == null ? null : _addCustomHours,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonColor,
+                      backgroundColor: AppTheme.buttonColor,
                       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -296,10 +298,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: ListTile(
-                        title: Text('Clock In: ${formatDateTime(entry.clockIn)}', style: TextStyle(color: textColor)),
+                        title: Text('Clock In: ${formatDateTime(entry.clockIn)}', style: TextStyle(color: _isDarkMode ? Colors.white : AppTheme.textColor)),
                         subtitle: entry.clockOut != null
-                            ? Text('Clock Out: ${formatDateTime(entry.clockOut!)}', style: TextStyle(color: textColor))
-                            : Text('Still clocked in', style: TextStyle(color: textColor)),
+                            ? Text('Clock Out: ${formatDateTime(entry.clockOut!)}', style: TextStyle(color: _isDarkMode ? Colors.white : AppTheme.textColor))
+                            : Text('Still clocked in', style: TextStyle(color: _isDarkMode ? Colors.white : AppTheme.textColor)),
                         trailing: IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
                           onPressed: () async {
@@ -319,34 +321,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
-// Define light and dark themes
-final ThemeData lightTheme = ThemeData(
-  brightness: Brightness.light,
-  primaryColor: Color(0xFF6200EE),
-  colorScheme: ColorScheme.light(
-    primary: Color(0xFF6200EE),
-    secondary: Color(0xFF03DAC6),
-    background: Color(0xFFF5F5F5),
-  ),
-  scaffoldBackgroundColor: Color(0xFFF5F5F5),
-  appBarTheme: AppBarTheme(
-    backgroundColor: Color(0xFF6200EE),
-    foregroundColor: Colors.white,
-  ),
-);
-
-final ThemeData darkTheme = ThemeData(
-  brightness: Brightness.dark,
-  primaryColor: Color(0xFF6200EE),
-  colorScheme: ColorScheme.dark(
-    primary: Color(0xFF6200EE),
-    secondary: Color(0xFF03DAC6),
-    background: Colors.grey[900]!,
-  ),
-  scaffoldBackgroundColor: Colors.grey[900],
-  appBarTheme: AppBarTheme(
-    backgroundColor: Colors.grey[900],
-    foregroundColor: Colors.white,
-  ),
-);

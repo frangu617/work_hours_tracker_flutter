@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/database_helper.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_theme.dart'; // Import the theme file
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -31,7 +31,9 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add User')
+        title: Text('Add User'),
+        backgroundColor: AppTheme.primaryColor, // Use primary color from theme
+        foregroundColor: Colors.white, // White text
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -59,7 +61,14 @@ class _AdminScreenState extends State<AdminScreen> {
               // Add user button
               ElevatedButton(
                 onPressed: _addUser,
-                child: Text('Add User'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.buttonColor, // Use button color from theme
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text('Add User', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

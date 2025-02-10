@@ -4,6 +4,16 @@ class User {
 
   User({this.id, required this.name});
 
+  // Override == and hashCode to compare User objects by their id
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is User && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -11,7 +21,7 @@ class User {
     };
   }
 
-  factory User.fromMap(Map<String, dynamic> map){
+  factory User.fromMap(Map<String, dynamic> map) {
     return User(
       id: map['id'],
       name: map['name'],
