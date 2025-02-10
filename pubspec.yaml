@@ -40,6 +40,9 @@ dependencies:
   intl: ^0.18.1
   sqflite: ^2.4.1
   sqflite_common_ffi_web: ^0.4.5+4
+  shared_preferences: ^2.2.2
+  csv: ^5.0.1
+  
 
 dev_dependencies:
   flutter_test:
