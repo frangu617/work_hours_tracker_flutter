@@ -234,51 +234,46 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Dropdown to select a user
-              SizedBox(
-                width: double.infinity,
-                child: DropdownButton<User>(
-                  isExpanded: true,
-                  value: _selectedUser,
-                  hint: const Text('Select a user'),
-                  items: _users.map((user) {
-                    return DropdownMenuItem<User>(
-                      value: user,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(user.name),
-                          ),
-                          if (_isEditMode)
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () async {
-                                await _dbHelper.deleteUser(user.id!);
-                                _loadUsers();
-                              },
-                            ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (user) {
-                    setState(() {
-                      _selectedUser = user;
-                      _isClockedIn = false;
-                    });
-                    _loadEntries();
-                  },
-                  dropdownColor: _isDarkMode ? Colors.grey[800] : Colors.white,
-                  style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color),
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.blue),
-                  underline: Container(
-                    height: 2,
-                    color: Colors.blue,
-                  ),
+              DropdownButton<User>(
+                isExpanded: true,
+                value: _selectedUser,
+                hint: Text(
+                  'Select a user',
+                  style: _isDarkMode
+                      ? AppTheme.darkTheme.textTheme.bodyLarge : AppTheme.lightTheme.textTheme.bodyLarge,
+                       // Uses theme text color
+                ),
+                items: _users.map((user) {
+                  return DropdownMenuItem<User>(
+                    value: user,
+                    child: Text(
+                      user.name,
+                      style: _isDarkMode ? AppTheme.darkTheme.textTheme.bodyLarge : AppTheme.lightTheme.textTheme.bodyLarge, // Uses theme text color
+                    ),
+                  );
+                }).toList(),
+                onChanged: (user) {
+                  setState(() {
+                    _selectedUser = user;
+                    _isClockedIn = false;
+                  });
+                  _loadEntries();
+                },
+                dropdownColor: Theme.of(context)
+                    .scaffoldBackgroundColor, // Matches theme background
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyLarge, // Ensures selected item follows theme
+                icon: Icon(Icons.arrow_drop_down,
+                    color: Theme.of(context).iconTheme.color),
+                underline: Container(
+                  height: 2,
+                  color: Theme.of(context)
+                      .primaryColor, // Uses theme primary color for underline
                 ),
               ),
-              const SizedBox(height: 20),
 
+              const SizedBox(height: 20),
               // Clock In/Out Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,

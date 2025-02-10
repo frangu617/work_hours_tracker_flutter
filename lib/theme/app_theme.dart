@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   static final ThemeData lightTheme = ThemeData(
-    primaryColor: Colors.blue,
+    primaryColor: Colors.blue.shade400,
     scaffoldBackgroundColor: Colors.white,
-    cardTheme: const CardTheme(
-      color: Colors.white, // Card background color in light mode
+    cardTheme: CardTheme(
+      color: Colors.white54, // Card background color in light mode
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.blue,
@@ -14,6 +14,14 @@ class AppTheme {
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.black87), // Default text color
       bodyMedium: TextStyle(color: Colors.black87), // Default text color
+    ),
+    dropdownMenuTheme: DropdownMenuThemeData(
+      textStyle: const TextStyle(
+          color: Colors.black87), // Ensures dropdown text is black
+      menuStyle: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll(
+            Colors.white), // Light mode dropdown background
+      ),
     ),
   );
 
@@ -30,6 +38,14 @@ class AppTheme {
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.white), // Default text color
       bodyMedium: TextStyle(color: Colors.white), // Default text color
+    ),
+    dropdownMenuTheme: DropdownMenuThemeData(
+      textStyle: const TextStyle(
+          color: Colors.white), // Ensures dropdown text is white
+      menuStyle: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll(
+            Colors.white70), // Dark mode dropdown background
+      ),
     ),
   );
 }
