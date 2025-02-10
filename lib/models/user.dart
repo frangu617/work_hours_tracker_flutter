@@ -4,7 +4,6 @@ class User {
 
   User({this.id, required this.name});
 
-  // Override == and hashCode to compare User objects by their id
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;

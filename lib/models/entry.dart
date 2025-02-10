@@ -1,4 +1,3 @@
-// lib/models/entry.dart
 class Entry {
   int? id;
   int userId;
@@ -12,14 +11,13 @@ class Entry {
     this.clockOut,
   });
 
-  // Constructor for custom hours
   Entry.custom({
     this.id,
     required this.userId,
     required DateTime clockIn,
     required DateTime clockOut,
-  }) : clockIn = clockIn.toIso8601String(),
-       clockOut = clockOut.toIso8601String();
+  })  : clockIn = clockIn.toIso8601String(),
+        clockOut = clockOut.toIso8601String();
 
   Map<String, dynamic> toMap() {
     return {
